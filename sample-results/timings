@@ -1,0 +1,23 @@
+# 500 points
+[plam@lynch a4-skel]$ time ./nbody > output/nbody-opencl-500pts
+
+real	0m0.182s
+user	0m0.087s
+sys	0m0.093s
+[plam@lynch a4-skel]$ time ./nbody-opt > output/nbody-opt-opencl-500pts
+
+real	0m0.168s
+user	0m0.077s
+sys	0m0.090s
+
+# 5000 points
+[plam@lynch a4-skel]$ time ./nbody > output/nbody-opencl-5000pts
+
+real	0m6.131s
+user	0m1.513s
+sys	0m0.880s
+[plam@lynch a4-skel]$ time ./nbody-opt > output/nbody-opt-opencl-5000pts
+
+real	0m3.506s
+user	0m1.640s
+sys	0m1.853s
