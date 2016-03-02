@@ -30,6 +30,10 @@ int main() {
  
         // Read source file
         std::ifstream sourceFile("nbody_kernel.cl");
+            if(!sourceFile.is_open()){
+                std::cerr << "Cannot find kernel file" << std::endl;
+                throw;
+            }
         std::string sourceCode(std::istreambuf_iterator<char>(sourceFile), (std::istreambuf_iterator<char>()));
         cl::Program::Sources source(1, std::make_pair(sourceCode.c_str(), sourceCode.length()+1));
  
