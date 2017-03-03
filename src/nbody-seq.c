@@ -46,7 +46,7 @@ void calculateForces(int points, int global_id, cl_float4 * globalP, cl_float4 *
 }
 
 cl_float4 * initializePositions() {
-    cl_float4 * pts = malloc(sizeof(cl_float4)*POINTS);
+    cl_float4 * pts = (cl_float4*) malloc(sizeof(cl_float4)*POINTS);
     int i;
 
     srand(42L); // for deterministic results
@@ -63,7 +63,7 @@ cl_float4 * initializePositions() {
 }
 
 cl_float4 * initializeAccelerations() {
-    cl_float4 * pts = malloc(sizeof(cl_float4)*POINTS);
+    cl_float4 * pts = (cl_float4*) malloc(sizeof(cl_float4)*POINTS);
     int i;
 
     for (i = 0; i < POINTS; i++) {
