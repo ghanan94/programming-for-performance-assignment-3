@@ -130,13 +130,13 @@ int main() {
     //
     // Buffer for positions array
     //
-    cl::Buffer x_buffer(context, CL_MEM_READ_WRITE, POINTS * sizeof(cl_float4), &err);
+    cl::Buffer x_buffer(context, CL_MEM_READ_ONLY, POINTS * sizeof(cl_float4), &err);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     //
     // Buffer for acceleration array
     //
-    cl::Buffer a_buffer(context, CL_MEM_READ_WRITE, POINTS * sizeof(cl_float4), &err);
+    cl::Buffer a_buffer(context, CL_MEM_WRITE_ONLY, POINTS * sizeof(cl_float4), &err);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     //
