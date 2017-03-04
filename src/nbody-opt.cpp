@@ -17,6 +17,7 @@
 #define DEBUG_PRINT(str, ...) printf(str, ##__VA_ARGS__)
 
 typedef cl_float4 (* pbins_t)[BINS_PER_DIM][BINS_PER_DIM];
+typedef cl_int (* pbin_pts_offsets_t)[BINS_PER_DIM][BINS_PER_DIM];
 
 #define ASSERT(x, str, ...) \
 { \
@@ -83,6 +84,37 @@ pbins_t initializeBins ()
     cm = (pbins_t) calloc(BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, sizeof(cl_float4));
 
     return cm;
+}
+
+pbin_pts_offsets_t initializeBinPtsOffsets (pbins_t cm)
+{
+    pbin_pts_offsets_t offsets;
+    cl_float4 * cm_float4;
+    cl_int * offsets_int;
+
+    int i;
+
+    offsets = (pbin_pts_offsets_t) malloc(BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM * sizeof(cl_int));
+    cm_float4 = (cl_float4 *) cm;
+    offsets_int = (cl_int *) offsets;
+
+    offsets_int[0] = 0;
+
+    for (i = 1; i < (BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM); ++i)
+    {
+        offsets_int[i] = offsets_int[i - 1] + ((cl_int) cm_float4[i - 1].w);
+    }
+
+    return offsets;
+}
+
+cl_int * initializeBinPts ()
+{
+    cl_int * bin_pts;
+
+    bin_pts = (cl_int *) malloc(POINTS * sizeof(cl_int));
+
+    return bin_pts;
 }
 
 void calculate_nbody (
@@ -164,6 +196,42 @@ void calculate_bins_cm (
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 }
 
+void construct_bin_pts (
+    cl::CommandQueue &queue,
+    cl::Kernel &construct_bin_pts_kernel,
+    cl::Buffer &bin_pts_buffer,
+    cl::Buffer &bin_pts_offsets_buffer,
+    cl::Buffer &x_buffer,
+    cl::Buffer &points_buffer
+    )
+{
+    cl_int err;
+
+    //
+    // Set arguments to kernel
+    //
+    DEBUG_PRINT("Set args for construct bin pts kernel\n");
+    err = construct_bin_pts_kernel.setArg(0, bin_pts_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = construct_bin_pts_kernel.setArg(1, bin_pts_offsets_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = construct_bin_pts_kernel.setArg(2, x_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = construct_bin_pts_kernel.setArg(3, points_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Run the nbody_kernel on specific ND range
+    //
+    DEBUG_PRINT("Run construct_bin_pts_kernel\n");
+    err = queue.enqueueNDRangeKernel(construct_bin_pts_kernel, cl::NDRange(0, 0, 0), cl::NDRange(BINS_PER_DIM, BINS_PER_DIM, BINS_PER_DIM), cl::NullRange);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+}
+
+
 int main() {
     try {
     // Get available platforms
@@ -210,6 +278,7 @@ int main() {
     // Make kernel
     cl::Kernel nbody_kernel(program, "nbody");
     cl::Kernel calculate_bins_cm_kernel(program, "calculate_bins_cm");
+    cl::Kernel construct_bin_pts_kernel(program, "construct_bin_pts");
 
     // Create buffers
     cl_int err = 0;
@@ -219,6 +288,8 @@ int main() {
     cl_float4 * a = initializeAccelerations();
     int points = POINTS;
     pbins_t cm = initializeBins();
+    //cl_int * bin_pts = initializeBinPts();
+    pbin_pts_offsets_t bin_pts_offsets;
 
     //
     // Buffer for positions array
@@ -244,6 +315,18 @@ int main() {
     cl::Buffer cm_buffer(context, CL_MEM_READ_WRITE, sizeof(cl_float4) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, &err);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
+    //
+    // Buffer for bin pts
+    //
+    cl::Buffer bin_pts_buffer(context, CL_MEM_WRITE_ONLY, sizeof(cl_int) * POINTS, &err);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Buffer for bin pts offsets for each bin
+    //
+    cl::Buffer bin_pts_offsets_buffer(context, CL_MEM_READ_ONLY, sizeof(cl_int) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, &err);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
     // Write buffers
     DEBUG_PRINT("Write buffers\n");
     err = queue.enqueueWriteBuffer(x_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), x);
@@ -259,6 +342,10 @@ int main() {
     // Set args, run kernel and read buffers
     //
     calculate_bins_cm(queue, calculate_bins_cm_kernel, x_buffer, cm_buffer, points_buffer, cm);
+
+    bin_pts_offsets = initializeBinPtsOffsets(cm);
+    construct_bin_pts(queue, construct_bin_pts_kernel, bin_pts_buffer, bin_pts_offsets_buffer, x_buffer, points_buffer);
+
     calculate_nbody(queue, nbody_kernel, x_buffer, a_buffer, points_buffer, a);
 
     for (int i = 0; i < POINTS; ++i)
@@ -271,6 +358,8 @@ int main() {
     free(x);
     free(a);
     free(cm);
+    free(bin_pts_offsets);
+    //free(bin_pts);
 
     } catch(cl::Error error) {
         std::cout << error.what() << "(" << error.err() << ")" << std::endl;

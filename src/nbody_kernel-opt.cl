@@ -6,6 +6,74 @@
     (((value) >= (min_value)) && ((value) <= (max_value)))
 
 typedef float4 (bins_t)[BINS_PER_DIM][BINS_PER_DIM];
+typedef int (bin_pts_offsets_t)[BINS_PER_DIM][BINS_PER_DIM];
+
+void get_global_ids (
+    int * const global_id
+    )
+{
+    //
+    // x dim
+    //
+    global_id[0] = get_global_id(0);
+
+    //
+    // y dim
+    //
+    global_id[1] = get_global_id(1);
+
+    //
+    // z dim
+    //
+    global_id[2] = get_global_id(2);
+}
+
+__kernel void construct_bin_pts (
+    global int * const global_bin_pts,
+    global bin_pts_offsets_t const * const global_bin_pts_offsets,
+    global float4 const * const global_p,
+    global int const * const points
+    )
+{
+    int global_id[3];
+    int i;
+    float max_x;
+    float min_x;
+    float max_y;
+    float min_y;
+    float max_z;
+    float min_z;
+    int counter;
+
+    get_global_ids(global_id);
+
+    //
+    // Calculate bounds for the bin
+    //
+    min_x = (float) (global_id[0] * BIN_LENGTH);
+    max_x = min_x + BIN_LENGTH;
+
+    min_y = (float) (global_id[1] * BIN_LENGTH);
+    max_y = min_x + BIN_LENGTH;
+
+    min_z = (float) (global_id[2] * BIN_LENGTH);
+    max_z = min_x + BIN_LENGTH;
+
+    //
+    // Iterate through all the points and find the points that should lie within this bin
+    //
+    counter = 0;
+
+    for (i = 0; i < points[0]; ++i)
+    {
+        if (IS_IN(min_x, max_x, global_p[i].x)
+            && IS_IN(min_y, max_y, global_p[i].y)
+            && IS_IN(min_z, max_z, global_p[i].z))
+        {
+            global_bin_pts[global_bin_pts_offsets[global_id[0]][global_id[1]][global_id[2]] + (counter++)] = i;
+        }
+    }
+}
 
 
 __kernel void calculate_bins_cm (
@@ -23,20 +91,7 @@ __kernel void calculate_bins_cm (
     float max_z;
     float min_z;
 
-    //
-    // x dim
-    //
-    global_id[0] = get_global_id(0);
-
-    //
-    // y dim
-    //
-    global_id[1] = get_global_id(1);
-
-    //
-    // z dim
-    //
-    global_id[2] = get_global_id(2);
+    get_global_ids(global_id);
 
     //
     // Calculate bounds for the bin
