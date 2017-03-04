@@ -55,10 +55,11 @@ cl_float4 * initializePositions ()
 
 cl_float4 * initializeAccelerations ()
 {
-    int i;
     cl_float4 * pts;
 
     /*
+    int i;
+
     pts = (cl_float4 *) malloc(sizeof(cl_float4) * POINTS);
 
     for (i = 0; i < POINTS; ++i)
@@ -77,9 +78,9 @@ cl_float4 * initializeAccelerations ()
 
 pbins_t initializeBins ()
 {
-    cl_float4 (* cm)[BINS_PER_DIM][BINS_PER_DIM];
+    pbins_t cm;
 
-    cm = (pbins_t) calloc(sizeof(cl_float4), BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM);
+    cm = (pbins_t) calloc(BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, sizeof(cl_float4));
 
     return cm;
 }
@@ -169,9 +170,6 @@ int main() {
     err = queue.enqueueWriteBuffer(x_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), x);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
-    err = queue.enqueueWriteBuffer(a_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), a);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
     err = queue.enqueueWriteBuffer(points_buffer,  CL_TRUE, 0, sizeof(int), &points);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
@@ -199,20 +197,20 @@ int main() {
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     // Run the nbody_kernel on specific ND range
-    DEBUG_PRINT("Run\n");
+    DEBUG_PRINT("Run calculate_bins_cm_kernel\n");
     err = queue.enqueueNDRangeKernel(calculate_bins_cm_kernel, cl::NDRange(0, 0, 0), cl::NDRange(BINS_PER_DIM, BINS_PER_DIM, BINS_PER_DIM), cl::NullRange);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
+    DEBUG_PRINT("Read buffers after calculate_bins_cm_kernel\n");
+    err = queue.enqueueReadBuffer(cm_buffer, CL_TRUE, 0, sizeof(cl_float4) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, cm);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    DEBUG_PRINT("Run nbody_kernel\n");
     err = queue.enqueueNDRangeKernel(nbody_kernel, cl::NDRange(0), cl::NDRange(POINTS), cl::NullRange);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
-    queue.finish();
-
     // Read buffer(s)
-    DEBUG_PRINT("Read buffers\n");
-    err = queue.enqueueReadBuffer(x_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), x);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
+    DEBUG_PRINT("Read buffers after nbody_kernel\n");
     err = queue.enqueueReadBuffer(a_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), a);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
@@ -225,6 +223,7 @@ int main() {
 
     free(x);
     free(a);
+    free(cm);
 
     } catch(cl::Error error) {
         std::cout << error.what() << "(" << error.err() << ")" << std::endl;
