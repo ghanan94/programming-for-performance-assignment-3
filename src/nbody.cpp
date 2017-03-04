@@ -12,6 +12,9 @@
 #define POINTS (500 * 64)
 #define SPACE (1000.0f)
 
+#define DEBUG_PRINT(str, ...) /**/
+//#define DEBUG_PRINT(str, ...) printf(str, ##__VA_ARGS__)
+
 #define ASSERT(x, str, ...) \
 { \
     if ((x) == 0) \
@@ -119,7 +122,7 @@ int main() {
     // Create buffers
     cl_int err = 0;
 
-    printf("Create buffers\n");
+    DEBUG_PRINT("Create buffers\n");
     cl_float4 * x = initializePositions();
     cl_float4 * a = initializeAccelerations();
     int points = POINTS;
@@ -143,7 +146,7 @@ int main() {
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     // Write buffers
-    printf("Write buffers\n");
+    DEBUG_PRINT("Write buffers\n");
     err = queue.enqueueWriteBuffer(x_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), x);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
@@ -154,7 +157,7 @@ int main() {
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     // Set arguments to kernel
-    printf("Set args\n");
+    DEBUG_PRINT("Set args\n");
     err = kernel.setArg(0, x_buffer);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
@@ -165,12 +168,12 @@ int main() {
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     // Run the kernel on specific ND range
-    printf("Run\n");
+    DEBUG_PRINT("Run\n");
     err = queue.enqueueNDRangeKernel(kernel, cl::NDRange(0), cl::NDRange(POINTS), cl::NullRange);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     // Read buffer(s)
-    printf("Read buffers\n");
+    DEBUG_PRINT("Read buffers\n");
     err = queue.enqueueReadBuffer(x_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), x);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
