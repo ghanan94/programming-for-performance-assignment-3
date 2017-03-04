@@ -85,6 +85,85 @@ pbins_t initializeBins ()
     return cm;
 }
 
+void calculate_nbody (
+    cl::CommandQueue &queue,
+    cl::Kernel &nbody_kernel,
+    cl::Buffer &x_buffer,
+    cl::Buffer &a_buffer,
+    cl::Buffer &points_buffer,
+    cl_float4 * a
+    )
+{
+    cl_int err;
+
+    //
+    // Set Args
+    //
+    DEBUG_PRINT("Set nbody_kernel args\n");
+    err = nbody_kernel.setArg(0, x_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = nbody_kernel.setArg(1, a_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = nbody_kernel.setArg(2, points_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Run Kernel
+    //
+    DEBUG_PRINT("Run nbody_kernel\n");
+    err = queue.enqueueNDRangeKernel(nbody_kernel, cl::NDRange(0), cl::NDRange(POINTS), cl::NullRange);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Read buffer(s)
+    //
+    DEBUG_PRINT("Read buffers after nbody_kernel\n");
+    err = queue.enqueueReadBuffer(a_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), a);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+}
+
+void calculate_bins_cm (
+    cl::CommandQueue &queue,
+    cl::Kernel &calculate_bins_cm_kernel,
+    cl::Buffer &x_buffer,
+    cl::Buffer &cm_buffer,
+    cl::Buffer &points_buffer,
+    pbins_t cm
+    )
+{
+    cl_int err;
+
+    //
+    // Set arguments to kernel
+    //
+    DEBUG_PRINT("Set args for calculate_bins_cm kernel\n");
+    err = calculate_bins_cm_kernel.setArg(0, cm_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = calculate_bins_cm_kernel.setArg(1, x_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    err = calculate_bins_cm_kernel.setArg(2, points_buffer);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Run the nbody_kernel on specific ND range
+    //
+    DEBUG_PRINT("Run calculate_bins_cm_kernel\n");
+    err = queue.enqueueNDRangeKernel(calculate_bins_cm_kernel, cl::NDRange(0, 0, 0), cl::NDRange(BINS_PER_DIM, BINS_PER_DIM, BINS_PER_DIM), cl::NullRange);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+
+    //
+    // Read Buffers
+    //
+    DEBUG_PRINT("Read buffers after calculate_bins_cm_kernel\n");
+    err = queue.enqueueReadBuffer(cm_buffer, CL_TRUE, 0, sizeof(cl_float4) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, cm);
+    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+}
+
 int main() {
     try {
     // Get available platforms
@@ -176,43 +255,11 @@ int main() {
     err = queue.enqueueWriteBuffer(cm_buffer, CL_TRUE, 0, sizeof(cl_float4) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, cm);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
-    // Set arguments to kernel
-    DEBUG_PRINT("Set args\n");
-    err = nbody_kernel.setArg(0, x_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    err = nbody_kernel.setArg(1, a_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    err = nbody_kernel.setArg(2, points_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    err = calculate_bins_cm_kernel.setArg(0, cm_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    err = calculate_bins_cm_kernel.setArg(1, x_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    err = calculate_bins_cm_kernel.setArg(2, points_buffer);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    // Run the nbody_kernel on specific ND range
-    DEBUG_PRINT("Run calculate_bins_cm_kernel\n");
-    err = queue.enqueueNDRangeKernel(calculate_bins_cm_kernel, cl::NDRange(0, 0, 0), cl::NDRange(BINS_PER_DIM, BINS_PER_DIM, BINS_PER_DIM), cl::NullRange);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    DEBUG_PRINT("Read buffers after calculate_bins_cm_kernel\n");
-    err = queue.enqueueReadBuffer(cm_buffer, CL_TRUE, 0, sizeof(cl_float4) * BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM, cm);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    DEBUG_PRINT("Run nbody_kernel\n");
-    err = queue.enqueueNDRangeKernel(nbody_kernel, cl::NDRange(0), cl::NDRange(POINTS), cl::NullRange);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
-
-    // Read buffer(s)
-    DEBUG_PRINT("Read buffers after nbody_kernel\n");
-    err = queue.enqueueReadBuffer(a_buffer, CL_TRUE, 0, POINTS * sizeof(cl_float4), a);
-    ASSERT(err == CL_SUCCESS, "err was %d\n", err);
+    //
+    // Set args, run kernel and read buffers
+    //
+    calculate_bins_cm(queue, calculate_bins_cm_kernel, x_buffer, cm_buffer, points_buffer, cm);
+    calculate_nbody(queue, nbody_kernel, x_buffer, a_buffer, points_buffer, a);
 
     for (int i = 0; i < POINTS; ++i)
     {
