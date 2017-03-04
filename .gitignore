@@ -1,0 +1,4 @@
+bin/*
+report.pdf
+*.log
+*.aux

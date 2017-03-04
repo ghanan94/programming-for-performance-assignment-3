@@ -7,8 +7,8 @@
 \pagestyle{empty}
 
 \title{ECE 459: Programming for Performance\\Assignment 3}
-\author{Your Name}
-\date{March 11, 2016}
+\author{Ghanan Gowripalan}
+\date{\today}
 
 % Code listing style
 \lstset{frame=single}
@@ -16,6 +16,40 @@
 \begin{document}
 
 \maketitle
+
+\section*{Part 1: Brute-force Approach}
+
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lr}
+    & {\bf Time (s)} \\
+    \hline
+    Run 1 & 10.787 \\
+    Run 2 & 10.836 \\
+    Run 3 & 10.790 \\
+    \hline
+    Average & 10.804
+  \end{tabular}
+  \caption{Benchmark results for sequential N-Body implementation with 500 points}
+  \label{tbl-nbody-seq-500}
+\end{table}
+
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lr}
+    & {\bf Time (s)} \\
+    \hline
+    Run 1 & 0.211 \\
+    Run 2 & 0.195 \\
+    Run 3 & 0.175 \\
+    \hline
+    Average & 0.194
+  \end{tabular}
+  \caption{Benchmark results for OpenCl N-Body implementation with 500 points and no approximations}
+  \label{tbl-nbody-gpu-500-no-approx}
+\end{table}
 
 \begin{lstlisting}
 #include <iostream>
