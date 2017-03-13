@@ -8,10 +8,13 @@ CXXFLAGS = -std=c++0x -U__STRICT_ANSI__ -O2 -lOpenCL
 
 default: all
 
-all: bin nbody-seq nbody nbody-opt report
+all: bin nbody-seq nbody-opt-seq nbody nbody-opt report
 
 bin:
 	mkdir bin
+
+nbody-opt-seq: src/nbody-opt-seq.c
+	$(CXX) $< $(CXXFLAGS) -o bin/nbody-opt-seq
 
 nbody-seq: src/nbody-seq.c
 	$(CXX) $< $(CXXFLAGS) -o bin/nbody-seq
