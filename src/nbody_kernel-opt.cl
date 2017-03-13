@@ -46,6 +46,9 @@ __kernel void construct_bin_pts (
 {
     int global_id[3];
     int i;
+    int x;
+    int y;
+    int z;
     float max_x;
     float min_x;
     float max_y;
@@ -61,19 +64,43 @@ __kernel void construct_bin_pts (
 
     idx = global_id[0] * (BINS_PER_DIM * BINS_PER_DIM) + global_id[1] * BINS_PER_DIM + global_id[2];
 
-
     //
     // Calculate offset from beginning of bin_pts array to the beginning
     // of where this bin's points start
     //
     offset = 0;
-    temp_pt = (global int *) global_cm;
+    temp_pt = (global float4 *) global_cm;
 
     for (i = 0; i < idx; ++i)
     {
         offset += (int) temp_pt[i].w;
     }
+/*
+    offset = 0;
+    for (x = 0; x < global_id[0]; ++x)
+    {
+        for (y = 0; y < BINS_PER_DIM; ++y)
+        {
+            for (z = 0; z < BINS_PER_DIM; ++z)
+            {
+                offset += (int) global_cm[x][y][z].w;
+            }
+        }
+    }
 
+    for (y = 0; y < global_id[1]; ++y)
+    {
+        for (z = 0; z < BINS_PER_DIM; ++z)
+        {
+            offset += (int) global_cm[x][y][z].w;
+        }
+    }
+
+    for (z = 0; z < global_id[2]; ++z)
+    {
+        offset += (int) global_cm[x][y][z].w;
+    }
+*/
     global_bin_pts_offsets[global_id[0]][global_id[1]][global_id[2]] = offset;
 
     //
@@ -218,9 +245,9 @@ __kernel void nbody (
     global_id = get_global_id(0);
     my_position = global_p[global_id];
 
-    x_bin = ((int) my_position.x) / ((int) BIN_LENGTH);
-    y_bin = ((int) my_position.y) / ((int) BIN_LENGTH);
-    z_bin = ((int) my_position.z) / ((int) BIN_LENGTH);
+    x_bin = (int) (my_position.x / BIN_LENGTH);
+    y_bin = (int) (my_position.y / BIN_LENGTH);
+    z_bin = (int) (my_position.z / BIN_LENGTH);
 
     acc = (float4) {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -239,39 +266,51 @@ __kernel void nbody (
     }
 
     //
-    // Subtract near bins
+    // Subtract near bins and do brute force calculation for near by bins
     //
-    if (x_bin > 0)
+    if (x_bin <= 0)
     {
-        x = x_bin - 1;
+        x = 0;
+    }
+    else if (x_bin > 9)
+    {
+        x = 8;
     }
     else
     {
-        x = 0;
+        x = x_bin - 1;
     }
 
     for (; x < x_bin + 2 && x < BINS_PER_DIM; ++x)
     {
 
-        if (y_bin > 0)
+        if (y_bin <= 0)
         {
-            y = y_bin - 1;
+            y = 0;
+        }
+        else if (y_bin > 9)
+        {
+            y = 8;
         }
         else
         {
-            y = 0;
+            y = y_bin - 1;
         }
 
         for (; y < y_bin + 2 && y < BINS_PER_DIM; ++y)
         {
 
-            if (z_bin > 0)
+            if (z_bin <= 0)
             {
-                z = z_bin - 1;
+                z = 0;
+            }
+            else if (z_bin > 9)
+            {
+                z = 8;
             }
             else
             {
-                z = 0;
+                z = z_bin - 1;
             }
 
             for (; z < z_bin + 2 && z < BINS_PER_DIM; ++z)
