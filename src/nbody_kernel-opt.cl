@@ -327,7 +327,7 @@ __kernel void nbody (
 
                 for (i = 0; i < ((int) global_cm[x][y][z].w); ++i)
                 {
-                    body_body_interaction(my_position, global_p[global_bin_pts[offset] + i], &acc);
+                    body_body_interaction(my_position, global_p[global_bin_pts[offset + i]], &acc);
                 }
             }
         }
