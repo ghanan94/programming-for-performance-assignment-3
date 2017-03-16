@@ -32,7 +32,7 @@ report.pdf: report/report.tex
 	mv report/report.pdf report.pdf
 
 clean:
-	$(RM) nbody-seq nbody
+	$(RM) bin/nbody bin/nbody-seq bin/nbody-opt bin/nbody-opt-seq
 	$(RM) report/*.aux report/*.log
 
 .PHONY: all report clean
