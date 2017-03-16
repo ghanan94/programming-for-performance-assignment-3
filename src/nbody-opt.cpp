@@ -9,7 +9,7 @@
 #include <vector>
 #include <random>
 
-#define POINTS (500 * 64)
+#define POINTS (5000 * 64)
 #define SPACE (1000.0f)
 #define BINS_PER_DIM (10)
 
