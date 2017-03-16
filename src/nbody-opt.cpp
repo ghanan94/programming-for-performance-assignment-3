@@ -14,7 +14,7 @@
 #define BINS_PER_DIM (10)
 
 #define DEBUG_PRINT(str, ...) /**/
-#define DEBUG_PRINT(str, ...) printf(str, ##__VA_ARGS__)
+//#define DEBUG_PRINT(str, ...) printf(str, ##__VA_ARGS__)
 
 #define ASSERT(x, str, ...) \
 { \
