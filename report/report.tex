@@ -54,11 +54,11 @@
   \begin{tabular}{lr}
     & {\bf Time (s)} \\
     \hline
-    Run 1 & 0.0 \\
-    Run 2 & 0.0 \\
-    Run 3 & 0.0 \\
+    Run 1 & - \\
+    Run 2 & - \\
+    Run 3 & - \\
     \hline
-    Average & 0.0
+    Average & -
   \end{tabular}
   \caption{Benchmark results for sequential N-Body implementation with 5000 points and no approximations}
   \label{tbl-nbody-seq-5000-no-approx}
@@ -117,11 +117,11 @@
   \begin{tabular}{lr}
     & {\bf Time (s)} \\
     \hline
-    Run 1 & 84.105 \\
-    Run 2 & 84.629 \\
-    Run 3 & 84.967 \\
+    Run 1 & 82.928 \\
+    Run 2 & 83.382 \\
+    Run 3 & 83.753 \\
     \hline
-    Average & 84.567
+    Average & 83.354
   \end{tabular}
   \caption{Benchmark results for sequential N-Body implementation with 5000 points with approximations}
   \label{tbl-nbody-seq-5000-approx}
@@ -132,25 +132,18 @@
   \begin{tabular}{lr}
     & {\bf Time (s)} \\
     \hline
-    Run 1 & 5.368 \\
-    Run 2 & 5.383 \\
-    Run 3 & 5.352 \\
+    Run 1 & 2.055 \\
+    Run 2 & 2.050 \\
+    Run 3 & 2.127 \\
     \hline
-    Average & 5.368
+    Average & 2.077
   \end{tabular}
   \caption{Benchmark results for OpenCl N-Body implementation with 5000 points with approximations}
   \label{tbl-nbody-gpu-5000-approx}
 \end{table}
 
+With 500 points, the OpenCL implementation with no approximations averaged an execution time of approximately 0.194s, and with the approximations averaged an execution time of approximately 0.194s aswell. With 5000pts, the OpenCL implementation with no approximations averaged an execution time of approximately 4.511s, and with the approximations averaged an execution time of approximately 2.077s.
 
-
-\begin{lstlisting}
-#include <iostream>
-
-int main(int argc, char *argv[])
-{
-    std::cout << "Example code listing" << std::endl;
-}
-\end{lstlisting}
+The approximations were implemented with 3 kernels. One of the kernels is used to calculate the center mass for each of the bins by using a kernel for each bin. This kernel loops through all the points, and the weighted average of all points within the bounds of the bin is calculated. The second kernel keeps track of all the points that are within a bin so that for the following kernel, it require less computation to do the brute force calculation or neighbouring bins. The final kernel calculates the force on each point. This is done by first calculating the approximate force from each bin on that point. Next the forces from beighbouring bins are removed from the point as for neighbouring bins, a brute force calculation is done with every point within the bins. Finally, the brute force calculation is done for every point within the neighbouring bins.
 
 \end{document}
