@@ -269,7 +269,7 @@ int main() {
     //
     // Buffer for bin pts
     //
-    cl::Buffer bin_pts_buffer(context, CL_MEM_READ_WRITE, sizeof(cl_int) * POINTS, &err);
+    cl::Buffer bin_pts_buffer(context, CL_MEM_READ_WRITE, sizeof(cl_float4) * POINTS, &err);
     ASSERT(err == CL_SUCCESS, "err was %d\n", err);
 
     //

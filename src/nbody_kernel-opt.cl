@@ -37,7 +37,7 @@ inline void get_global_ids (
 // point
 //
 __kernel void construct_bin_pts (
-    global int * const global_bin_pts,
+    global float4 * const global_bin_pts,
     global bin_pts_offsets_t * const global_bin_pts_offsets,
     global float4 const * const global_p,
     global int const * const points,
@@ -75,32 +75,7 @@ __kernel void construct_bin_pts (
     {
         offset += (int) temp_pt[i].w;
     }
-/*
-    offset = 0;
-    for (x = 0; x < global_id[0]; ++x)
-    {
-        for (y = 0; y < BINS_PER_DIM; ++y)
-        {
-            for (z = 0; z < BINS_PER_DIM; ++z)
-            {
-                offset += (int) global_cm[x][y][z].w;
-            }
-        }
-    }
 
-    for (y = 0; y < global_id[1]; ++y)
-    {
-        for (z = 0; z < BINS_PER_DIM; ++z)
-        {
-            offset += (int) global_cm[x][y][z].w;
-        }
-    }
-
-    for (z = 0; z < global_id[2]; ++z)
-    {
-        offset += (int) global_cm[x][y][z].w;
-    }
-*/
     global_bin_pts_offsets[global_id[0]][global_id[1]][global_id[2]] = offset;
 
     //
@@ -126,7 +101,7 @@ __kernel void construct_bin_pts (
             && IS_IN(min_y, max_y, global_p[i].y)
             && IS_IN(min_z, max_z, global_p[i].z))
         {
-            global_bin_pts[offset + counter] = i;
+            global_bin_pts[offset + counter] = global_p[i];
             counter++;
         }
     }
@@ -223,7 +198,7 @@ inline void body_body_interaction (
 __kernel void nbody (
     global float4 const * const global_p,
     global bins_t const * const global_cm,
-    global int const * const global_bin_pts,
+    global float4 const * const global_bin_pts,
     global bin_pts_offsets_t const * const global_bin_pts_offsets,
     global float4 * const global_a,
     global int const * const points
@@ -327,7 +302,7 @@ __kernel void nbody (
 
                 for (i = 0; i < ((int) global_cm[x][y][z].w); ++i)
                 {
-                    body_body_interaction(my_position, global_p[global_bin_pts[offset + i]], &acc);
+                    body_body_interaction(my_position, global_bin_pts[offset + i], &acc);
                 }
             }
         }
