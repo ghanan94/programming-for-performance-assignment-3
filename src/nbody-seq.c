@@ -10,7 +10,7 @@
 
 /// runtime on my 2011 computer: 1m; in 2013, 27s.
 // on my 2011 laptop, 1m34s
-#define POINTS 5000 * 64
+#define POINTS 500 * 64
 #define SPACE 1000.0f;
 
 void bodyBodyInteraction(cl_float4 bi, cl_float4 bj, cl_float4 *ai) {
