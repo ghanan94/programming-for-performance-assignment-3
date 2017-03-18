@@ -184,6 +184,9 @@ void calculateForces (
     cl_float4 my_position = global_p[global_id];
     cl_float4 acc = {{0.0f, 0.0f, 0.0f, 1.0f}};
     int x_bin, y_bin, z_bin;
+    cl_float4 const * global_cm_linear;
+
+    global_cm_linear = (cl_float4 *) global_cm;
 
     x_bin = (int) (my_position.x / BIN_LENGTH);
     y_bin = (int) (my_position.y / BIN_LENGTH);
@@ -192,15 +195,9 @@ void calculateForces (
     //
     // Bin approx for all bins
     //
-    for (int x = 0; x < BINS_PER_DIM; ++x)
+    for (int i = 0; i < (BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM); ++i)
     {
-        for (int y = 0; y < BINS_PER_DIM; ++y)
-        {
-            for (int z = 0; z < BINS_PER_DIM; ++z)
-            {
-                body_body_interaction(my_position, global_cm[x][y][z], &acc);
-            }
-        }
+        body_body_interaction(my_position, global_cm_linear[i], &acc);
     }
 
     for (int x = MAX(0, x_bin - 1); x < MIN(BINS_PER_DIM, x_bin + 2); ++x)

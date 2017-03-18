@@ -4,6 +4,8 @@
 
 #define IS_IN(min_value, max_value, value)  \
     (((value) >= (min_value)) && ((value) < (max_value)))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 typedef float4 (bins_t)[BINS_PER_DIM][BINS_PER_DIM];
 typedef int (bin_pts_offsets_t)[BINS_PER_DIM][BINS_PER_DIM];
@@ -216,8 +218,12 @@ __kernel void nbody (
     int x_bin;
     int y_bin;
     int z_bin;
+    global float4 const * global_cm_linear;
 
     global_id = get_global_id(0);
+
+    global_cm_linear = (global float4 *) global_cm;
+
     my_position = global_p[global_id];
 
     x_bin = (int) (my_position.x / BIN_LENGTH);
@@ -229,66 +235,19 @@ __kernel void nbody (
     //
     // Bin approx for all bins
     //
-    for (x = 0; x < BINS_PER_DIM; ++x)
+    for (i = 0; i < (BINS_PER_DIM * BINS_PER_DIM * BINS_PER_DIM); ++i)
     {
-        for (y = 0; y < BINS_PER_DIM; ++y)
-        {
-            for (z = 0; z < BINS_PER_DIM; ++z)
-            {
-                body_body_interaction(my_position, global_cm[x][y][z], &acc);
-            }
-        }
+        body_body_interaction(my_position, global_cm_linear[i], &acc);
     }
 
     //
     // Subtract near bins and do brute force calculation for near by bins
     //
-    if (x_bin <= 0)
+    for (int x = MAX(0, x_bin - 1); x < MIN(BINS_PER_DIM, x_bin + 2); ++x)
     {
-        x = 0;
-    }
-    else if (x_bin > 9)
-    {
-        x = 8;
-    }
-    else
-    {
-        x = x_bin - 1;
-    }
-
-    for (; x < x_bin + 2 && x < BINS_PER_DIM; ++x)
-    {
-
-        if (y_bin <= 0)
+        for (int y = MAX(0, y_bin - 1); y < MIN(BINS_PER_DIM, y_bin + 2); ++y)
         {
-            y = 0;
-        }
-        else if (y_bin > 9)
-        {
-            y = 8;
-        }
-        else
-        {
-            y = y_bin - 1;
-        }
-
-        for (; y < y_bin + 2 && y < BINS_PER_DIM; ++y)
-        {
-
-            if (z_bin <= 0)
-            {
-                z = 0;
-            }
-            else if (z_bin > 9)
-            {
-                z = 8;
-            }
-            else
-            {
-                z = z_bin - 1;
-            }
-
-            for (; z < z_bin + 2 && z < BINS_PER_DIM; ++z)
+            for (int z = MAX(0, z_bin - 1); z < MIN(BINS_PER_DIM, z_bin + 2); ++z)
             {
                 neg_bin.x = 2 * my_position.x - global_cm[x][y][z].x;
                 neg_bin.y = 2 * my_position.y - global_cm[x][y][z].y;
