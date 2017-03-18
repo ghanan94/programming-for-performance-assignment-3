@@ -22,7 +22,7 @@
 
 cl_float4 cm[BINS_PER_DIM][BINS_PER_DIM][BINS_PER_DIM];
 int bin_pts_offsets[BINS_PER_DIM][BINS_PER_DIM][BINS_PER_DIM];
-int bin_pts[POINTS];
+cl_float4 bin_pts[POINTS];
 
 void construct_bins_cm (
     cl_float4 const * const global_p,
@@ -81,7 +81,7 @@ void construct_bins_cm (
 }
 
 void construct_bin_pts (
-    int * const global_bin_pts,
+    cl_float4 * const global_bin_pts,
     int (* const global_bin_pts_offsets)[BINS_PER_DIM][BINS_PER_DIM],
     cl_float4 const * const global_p,
     int const points,
@@ -142,7 +142,7 @@ void construct_bin_pts (
                         && IS_IN(min_y, max_y, global_p[i].y)
                         && IS_IN(min_z, max_z, global_p[i].z))
                     {
-                        global_bin_pts[offset + counter] = i;
+                        global_bin_pts[offset + counter] = global_p[i];
                         counter++;
                     }
                 }
@@ -177,7 +177,7 @@ void calculateForces (
     cl_float4 * global_p,
     cl_float4 * global_a,
     cl_float4 const (* const global_cm)[BINS_PER_DIM][BINS_PER_DIM],
-    int const * const global_bin_pts,
+    cl_float4 const * const global_bin_pts,
     int const (* const global_bin_pts_offsets)[BINS_PER_DIM][BINS_PER_DIM]
     )
 {
@@ -223,7 +223,7 @@ void calculateForces (
 
                 for (int i = 0; i < ((int) global_cm[x][y][z].w); ++i)
                 {
-                    body_body_interaction(my_position, global_p[global_bin_pts[offset + i]], &acc);
+                    body_body_interaction(my_position, global_bin_pts[offset + i], &acc);
                 }
             }
         }
@@ -265,7 +265,7 @@ int main(int argc, char ** argv)
     cl_float4 * a = initializeAccelerations();
 
     construct_bins_cm(x, POINTS, (cl_float4 (*)[BINS_PER_DIM][BINS_PER_DIM]) &cm);
-    construct_bin_pts((int *) &bin_pts,
+    construct_bin_pts((cl_float4 *) &bin_pts,
                       (int (*)[BINS_PER_DIM][BINS_PER_DIM]) &bin_pts_offsets,
                       x,
                       POINTS,
@@ -275,7 +275,7 @@ int main(int argc, char ** argv)
     {
         calculateForces(POINTS, i, x, a,
                         (cl_float4 (*)[BINS_PER_DIM][BINS_PER_DIM]) &cm,
-                        (int *) &bin_pts,
+                        (cl_float4 *) &bin_pts,
                         (int (*)[BINS_PER_DIM][BINS_PER_DIM]) &bin_pts_offsets);
     }
 
