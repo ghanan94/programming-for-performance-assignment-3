@@ -15,7 +15,7 @@
 
 void bodyBodyInteraction(cl_float4 bi, cl_float4 bj, cl_float4 *ai) {
     cl_float4 r;
-    
+
     r.x = bj.x - bi.x;
     r.y = bj.y - bi.y;
     r.z = bj.z - bi.z;
@@ -38,9 +38,9 @@ void calculateForces(int points, int global_id, cl_float4 * globalP, cl_float4 *
     int i;
 
     cl_float4 acc = {{0.0f, 0.0f, 0.0f, 1.0f}};
-    
+
     for (i = 0; i < points; i ++) {
-	bodyBodyInteraction(myPosition, globalP[i], &acc);
+    bodyBodyInteraction(myPosition, globalP[i], &acc);
     }
     globalA[global_id] = acc;
 }
@@ -52,12 +52,12 @@ cl_float4 * initializePositions() {
     srand(42L); // for deterministic results
 
     for (i = 0; i < POINTS; i++) {
-	// quick and dirty generation of points
-	// not random at all, but I don't care.
-	pts[i].x = ((float)rand())/RAND_MAX * SPACE;
-	pts[i].y = ((float)rand())/RAND_MAX * SPACE;
-	pts[i].z = ((float)rand())/RAND_MAX * SPACE;
-	pts[i].w = 1.0f; // size = 1.0f for simplicity.
+    // quick and dirty generation of points
+    // not random at all, but I don't care.
+    pts[i].x = ((float)rand())/RAND_MAX * SPACE;
+    pts[i].y = ((float)rand())/RAND_MAX * SPACE;
+    pts[i].z = ((float)rand())/RAND_MAX * SPACE;
+    pts[i].w = 1.0f; // size = 1.0f for simplicity.
     }
     return pts;
 }
@@ -67,7 +67,7 @@ cl_float4 * initializeAccelerations() {
     int i;
 
     for (i = 0; i < POINTS; i++) {
-	pts[i].x = pts[i].y = pts[i].z = pts[i].w = 0;
+    pts[i].x = pts[i].y = pts[i].z = pts[i].w = 0;
     }
     return pts;
 }
@@ -79,12 +79,12 @@ int main(int argc, char ** argv)
 
     int i;
     for (i = 0; i < POINTS; i++)
-	calculateForces(POINTS, i, x, a);
+    calculateForces(POINTS, i, x, a);
 
     for (i = 0; i < POINTS; i++)
-	printf("(%2.2f,%2.2f,%2.2f,%2.2f) (%2.3f,%2.3f,%2.3f)\n", 
-	       x[i].x, x[i].y, x[i].z, x[i].w,
-	       a[i].x, a[i].y, a[i].z);
+    printf("(%2.2f,%2.2f,%2.2f,%2.2f) (%2.3f,%2.3f,%2.3f)\n",
+           x[i].x, x[i].y, x[i].z, x[i].w,
+           a[i].x, a[i].y, a[i].z);
     free(x);
     free(a);
     return 0;
